@@ -1,10 +1,30 @@
 #!/bin/bash
-value=$(gsettings get org.gnome.desktop.notifications show-banners)
-if [[ $value == 'true' ]]
-then
-  notify-send "Notifications are disabled" -i user-busy
-  gsettings set org.gnome.desktop.notifications show-banners false
+
+distributor=$(lsb_release -si)
+
+echo "distributor = _${distributor}_"
+dconf_toggle() {
+  dnd_status=$(dconf read /org/gnome/desktop/notifications/show-banners)
+  if [[ "$dnd_status" = "true" ]]; then
+    dconf write /org/gnome/desktop/notifications/show-banners false
+  else
+    dconf write /org/gnome/desktop/notifications/show-banners true
+  fi
+}
+
+gsettings_toggle() {
+  value=$(gsettings get org.gnome.desktop.notifications show-banners)
+  if [[ "$value" = 'true' ]]; then
+    notify-send "Notifications are disabled with gsettings" -i user-busy
+    gsettings set org.gnome.desktop.notifications show-banners false
+  else
+    gsettings set org.gnome.desktop.notifications show-banners true
+    notify-send "Notifications are enabled with gsettings" -i user-available
+  fi
+}
+
+if [[ "${distributor}" = "Pop" ]]; then
+  dconf_toggle
 else
-  gsettings set org.gnome.desktop.notifications show-banners true
-  notify-send "Notifications are enabled" -i user-available
+  gsettings_toggle
 fi
